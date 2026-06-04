@@ -4,14 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArchHub | Control de Obra Profesional</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { navy: '#003049', green: '#006837', gold: '#FFCC00', bgslate: '#f8fafc' } } } }
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        navy: '#003049',
+                        green: '#006837',
+                        gold: '#FFCC00',
+                        bgslate: '#f8fafc'
+                    }
+                }
+            }
+        }
     </script>
+
     <style>
-        body { background-color: #f8fafc; }
-        .spinner { border: 4px solid rgba(0, 48, 73, 0.1); border-left-color: #FFCC00; border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; }
+        :root {
+            --color-navy: #003049;
+            --color-green: #006837;
+            --color-gold: #FFCC00;
+            --color-bg: #f8fafc;
+        }
+        body { background-color: var(--color-bg); }
+        .spinner {
+            border: 4px solid rgba(0, 48, 73, 0.1);
+            border-left-color: var(--color-gold);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            animation: spin 1s linear infinite;
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .view-layer { transition: opacity 0.25s ease-in-out; }
         .hidden-layer { opacity: 0; pointer-events: none; position: absolute; width: 100%; height: 0; overflow: hidden; }
@@ -22,96 +52,372 @@
 
     <div id="loader-overlay" class="fixed inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col justify-center items-center hidden">
         <div class="spinner mb-4"></div>
-        <p class="font-bold text-navy tracking-widest text-xs animate-pulse" id="loader-text">PROCESANDO DATOS...</p>
+        <p class="font-bold text-navy tracking-widest text-xs animate-pulse" id="loader-text">PROCESANDO DATOS DE OBRA...</p>
     </div>
 
     <main id="view-login" class="view-layer active-layer min-h-screen flex items-center justify-center p-4">
         <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-gold">
             <h1 class="text-4xl font-black text-navy mb-1 text-center">Arch<span class="text-gold">Hub</span></h1>
             <p class="text-center text-gray-400 font-bold text-xs tracking-widest mb-8">INFORME DE CONTROL ESTRATÉGICO</p>
+            
             <form id="login-form" class="space-y-5">
-                <input type="text" id="user" placeholder="Usuario" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-gold outline-none">
-                <input type="password" id="pass" placeholder="Contraseña" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-gold outline-none">
-                <button type="submit" class="w-full bg-navy text-white font-bold py-3 rounded-xl hover:bg-opacity-95 transition-all">AUTENTICAR PORTAL</button>
+                <div>
+                    <label class="block text-xs font-bold text-navy uppercase tracking-wider mb-1">Usuario de Acceso</label>
+                    <input type="text" id="user" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-gold outline-none transition-all text-sm font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-navy uppercase tracking-wider mb-1">Contraseña</label>
+                    <input type="password" id="pass" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-gold outline-none transition-all text-sm font-medium">
+                </div>
+                <button type="submit" class="w-full bg-navy text-white font-bold py-3 rounded-xl hover:bg-opacity-95 transition-all shadow-lg text-sm tracking-wider">AUTENTICAR PORTAL</button>
             </form>
             <div id="login-error" class="text-red-600 text-xs font-bold mt-4 text-center hidden"></div>
         </div>
     </main>
 
     <main id="view-dashboard" class="view-layer hidden-layer h-screen flex flex-col md:flex-row">
+        
         <aside class="w-full md:w-80 bg-navy text-white flex flex-col shadow-2xl z-20 shrink-0">
             <div class="p-6 border-b border-white/10 flex justify-between items-center">
-                <h2 class="text-2xl font-black">Arch<span class="text-gold">Hub</span></h2>
-                <button onclick="logout()" class="text-[10px] text-slate-400 hover:text-white underline">Cerrar Sesión</button>
+                <h2 class="text-2xl font-black tracking-tight">Arch<span class="text-gold">Hub</span></h2>
+                <button onclick="logout()" class="text-xs text-slate-400 hover:text-white transition-colors underline font-medium">Cerrar Sesión</button>
             </div>
+            
+            <div class="p-5 bg-white/5 border-b border-white/10">
+                <p class="text-[10px] text-gold font-bold tracking-widest uppercase">ENTIDAD / CONSULTOR</p>
+                <p class="font-bold text-base line-clamp-1" id="ui-company-name">---</p>
+                <span id="ui-role-badge" class="inline-block mt-2 px-2 py-0.5 bg-green text-white text-[10px] font-bold rounded uppercase tracking-wider hidden">ADMINISTRADOR</span>
+            </div>
+
             <div class="p-4 flex-1 flex flex-col overflow-hidden">
-                <h3 class="text-[11px] text-slate-400 font-bold mb-3 uppercase px-2">Proyectos</h3>
-                <div id="project-list" class="space-y-1 overflow-y-auto"></div>
+                <h3 class="text-[11px] text-slate-400 font-bold mb-3 tracking-widest uppercase px-2">Cartera de Proyectos</h3>
+                <div id="project-list" class="space-y-1 overflow-y-auto pr-1 flex-1">
+                    </div>
             </div>
         </aside>
-        <section class="flex-1 bg-bgslate overflow-y-auto p-8" id="dashboard-content">
-            <h1 class="text-3xl font-black mb-6" id="ui-proj-name">Seleccione una obra</h1>
-            </section>
+
+        <section class="flex-1 bg-bgslate overflow-y-auto p-4 md:p-8">
+            
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl md:text-3xl font-black text-navy tracking-tight" id="ui-proj-name">Seleccione obra</h1>
+                        <span id="ui-proj-id" class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-mono font-bold">---</span>
+                    </div>
+                    <p class="text-slate-500 text-sm font-semibold flex items-center mt-1">
+                        <span class="text-gold mr-1.5 text-base">📍</span> <span id="ui-proj-loc">---</span>
+                    </p>
+                </div>
+                <div class="mt-3 md:mt-0 text-left md:text-right border-l-4 md:border-l-0 md:border-r-4 border-gold pl-3 md:pl-0 md:pr-3">
+                    <p class="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Frente Técnico In-Situ</p>
+                    <p class="font-bold text-base text-navy" id="ui-proj-supervisor">---</p>
+                </div>
+            </header>
+
+            <div class="bg-white p-6 rounded-3xl shadow-xl border border-slate-100 mb-6">
+                <p class="text-[11px] text-slate-400 font-bold tracking-widest uppercase mb-6">Línea de Progreso Constructivo</p>
+                <div class="relative flex justify-between items-center w-full px-4 max-w-4xl mx-auto">
+                    <div class="absolute top-4 left-4 right-4 h-1 bg-slate-200 -z-10 rounded-full"></div>
+                    <div id="ui-timeline-line" class="absolute top-4 left-4 h-1 bg-green -z-10 rounded-full transition-all duration-500" style="width: 0%;"></div>
+
+                    <div class="flex flex-col items-center flex-1 text-center group" id="step-node-0">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-slate-200 text-slate-500 border-4 border-white shadow-md transition-colors" id="step-dot-0">1</div>
+                        <span class="text-[11px] font-bold mt-2 text-slate-400 transition-colors" id="step-txt-0">Excavación</span>
+                    </div>
+                    <div class="flex flex-col items-center flex-1 text-center group" id="step-node-1">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-slate-200 text-slate-500 border-4 border-white shadow-md transition-colors" id="step-dot-1">2</div>
+                        <span class="text-[11px] font-bold mt-2 text-slate-400 transition-colors" id="step-txt-1">Cimentación</span>
+                    </div>
+                    <div class="flex flex-col items-center flex-1 text-center group" id="step-node-2">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-slate-200 text-slate-500 border-4 border-white shadow-md transition-colors" id="step-dot-2">3</div>
+                        <span class="text-[11px] font-bold mt-2 text-slate-400 transition-colors" id="step-txt-2">Estructura</span>
+                    </div>
+                    <div class="flex flex-col items-center flex-1 text-center group" id="step-node-3">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-slate-200 text-slate-500 border-4 border-white shadow-md transition-colors" id="step-dot-3">4</div>
+                        <span class="text-[11px] font-bold mt-2 text-slate-400 transition-colors" id="step-txt-3">Mampostería</span>
+                    </div>
+                    <div class="flex flex-col items-center flex-1 text-center group" id="step-node-4">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-slate-200 text-slate-500 border-4 border-white shadow-md transition-colors" id="step-dot-4">5</div>
+                        <span class="text-[11px] font-bold mt-2 text-slate-400 transition-colors" id="step-txt-4">Acabados</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white rounded-3xl p-6 shadow-xl border-l-8 border-navy">
+                    <p class="text-xs text-slate-400 font-bold tracking-widest uppercase mb-1">AVANCE FÍSICO</p>
+                    <p class="text-3xl font-black text-navy" id="ui-kpi-progress">0%</p>
+                </div>
+                <div class="bg-white rounded-3xl p-6 shadow-xl border-l-8 border-green">
+                    <p class="text-xs text-slate-400 font-bold tracking-widest uppercase mb-1">PPTO. APROBADO</p>
+                    <p class="text-3xl font-black text-navy" id="ui-kpi-budget">$0</p>
+                </div>
+                <div class="bg-white rounded-3xl p-6 shadow-xl border-l-8 border-gold">
+                    <p class="text-xs text-slate-400 font-bold tracking-widest uppercase mb-1">PPTO. EJECUTADO</p>
+                    <p class="text-3xl font-black text-navy" id="ui-kpi-spent">$0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white rounded-3xl shadow-xl p-6 lg:col-span-2 border border-slate-100 flex flex-col">
+                    <h3 class="text-lg font-black text-navy mb-4">Control de Materiales</h3>
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-[11px] text-slate-400 border-b border-slate-100 uppercase tracking-wider">
+                                    <th class="pb-3 font-bold">Cód</th>
+                                    <th class="pb-3 font-bold">Insumo</th>
+                                    <th class="pb-3 font-bold">Und</th>
+                                    <th class="pb-3 font-bold">Req</th>
+                                    <th class="pb-3 font-bold">Obra</th>
+                                    <th class="pb-3 font-bold text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-full-table" class="text-sm font-semibold text-navy divide-y divide-slate-100">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="space-y-6 lg:col-span-1">
+                    <div class="bg-white rounded-3xl shadow-xl p-6 border border-slate-100">
+                        <h3 class="text-xs text-slate-400 font-bold tracking-widest uppercase mb-3">Registro Técnico</h3>
+                        <div id="ui-blueprint-container" class="h-32 w-full rounded-2xl bg-[#1a4f8b] flex items-center justify-center border border-navy text-white font-mono font-bold p-4 text-center text-xs tracking-wider shadow-inner transition-all">
+                            PLANO: N/A
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl shadow-xl p-6 border border-slate-100">
+                        <h3 class="text-xs text-slate-400 font-bold tracking-widest uppercase mb-3">Foto de Avance</h3>
+                        <div id="ui-photo-container" class="h-48 w-full rounded-2xl bg-slate-100 bg-cover bg-center border border-slate-200 shadow-inner transition-all flex items-center justify-center text-slate-400 text-xs font-bold">
+                            Sin registro visual disponible
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
     </main>
 
     <script>
+        // === PEGUE AQUÍ SU URL OBTENIDA AL IMPLEMENTAR EN GOOGLE APPS SCRIPT ===
         const API_URL = "https://script.google.com/macros/s/AKfycbzzy40HRNJCWkPGSRGqdZN6FXxd4MKInklZZvit0ZR94WZKBpryh-Ca_NDUE-e6nyBlzw/exec";
+        
         let APP_STATE = { user: null, projects: [], inventory: [], currentProjectId: null };
+        const STANDARD_PHASES = ["Excavación", "Cimentación", "Estructura", "Mampostería", "Acabados"];
 
-        // 1. REHIDRATACIÓN AL CARGAR
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedSession = localStorage.getItem('archhub_session');
-            if (savedSession) {
-                APP_STATE.user = JSON.parse(savedSession);
-                loadDashboardEngine();
-            }
-        });
+        const fmtCurrency = (num) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(num || 0);
 
         function showLoader(text = "PROCESANDO...") {
             document.getElementById('loader-text').innerText = text;
             document.getElementById('loader-overlay').classList.remove('hidden');
         }
+        function hideLoader() {
+            document.getElementById('loader-overlay').classList.add('hidden');
+        }
 
-        function hideLoader() { document.getElementById('loader-overlay').classList.add('hidden'); }
+        function switchView(viewId) {
+            document.querySelectorAll('.view-layer').forEach(el => {
+                el.classList.remove('active-layer');
+                el.classList.add('hidden-layer');
+            });
+            const target = document.getElementById(viewId);
+            target.classList.remove('hidden-layer');
+            target.classList.add('active-layer');
+        }
 
         async function apiRequest(action, params = {}) {
             showLoader();
-            const url = new URL(API_URL);
-            url.searchParams.append('action', action);
-            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-            const response = await fetch(url).then(r => r.json());
-            hideLoader();
-            if (response.error) throw new Error(response.error);
-            return response;
+            try {
+                const url = new URL(API_URL);
+                url.searchParams.append('action', action);
+                Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+                const response = await fetch(url);
+                const data = await response.json();
+                hideLoader();
+
+                if (data.error) throw new Error(data.error);
+                return data;
+            } catch (err) {
+                hideLoader();
+                console.error("Falla crítica en API:", err);
+                throw err;
+            }
         }
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const u = document.getElementById('user').value.trim();
+            const p = document.getElementById('pass').value.trim();
+            
             try {
-                const res = await apiRequest('login', { user: document.getElementById('user').value, pass: document.getElementById('pass').value });
+                const res = await apiRequest('login', { user: u, pass: p });
                 APP_STATE.user = res.user;
-                localStorage.setItem('archhub_session', JSON.stringify(res.user)); // Guardado persistente
+                
+                document.getElementById('ui-company-name').innerText = res.user.name;
+                if(res.user.role === "ADMIN") {
+                    document.getElementById('ui-role-badge').classList.remove('hidden');
+                }
                 loadDashboardEngine();
-            } catch (err) {
-                const el = document.getElementById('login-error');
-                el.innerText = err.message;
-                el.classList.remove('hidden');
+            } catch (error) {
+                const errEl = document.getElementById('login-error');
+                errEl.innerText = "❌ " + error.message;
+                errEl.classList.remove('hidden');
             }
         });
 
-        function logout() {
-            localStorage.removeItem('archhub_session');
-            window.location.reload();
+        async function loadDashboardEngine() {
+            try {
+                showLoader("DESCARGANDO MATRIZ DE PROYECTOS...");
+                // Descarga única para optimizar velocidad del portal
+                const data = await apiRequest('getDashboard', { clientId: APP_STATE.user.id, role: APP_STATE.user.role });
+                
+                APP_STATE.projects = data.projects || [];
+                APP_STATE.inventory = data.inventory || [];
+
+                switchView('view-dashboard');
+                
+                if(APP_STATE.projects.length > 0) {
+                    renderSidebar();
+                    selectProject(APP_STATE.projects[0].ID_PROYECTO);
+                } else {
+                    document.getElementById('ui-proj-name').innerText = "Sin obras asignadas.";
+                }
+            } catch (e) {
+                alert("Error de sincronización primaria: " + e.message);
+                logout();
+            }
         }
 
-        async function loadDashboardEngine() {
-            document.getElementById('view-login').classList.remove('active-layer');
-            document.getElementById('view-login').classList.add('hidden-layer');
-            document.getElementById('view-dashboard').classList.remove('hidden-layer');
-            document.getElementById('view-dashboard').classList.add('active-layer');
+        function renderSidebar() {
+            const list = document.getElementById('project-list');
+            list.innerHTML = APP_STATE.projects.map(p => {
+                const percentage = (Number(p.AVANCE_FISICO) * 100).toFixed(1);
+                const isActive = APP_STATE.currentProjectId === p.ID_PROYECTO;
+                return `
+                    <div onclick="selectProject('${p.ID_PROYECTO}')" 
+                         class="cursor-pointer p-3.5 rounded-xl transition-all border-l-4 ${isActive ? 'bg-white/10 border-gold text-white font-bold' : 'border-transparent text-slate-300 hover:bg-white/5 hover:text-white'}">
+                        <p class="text-xs tracking-tight truncate uppercase">${p.NOMBRE_PROYECTO}</p>
+                        <p class="text-[11px] text-slate-400 font-semibold mt-0.5">${p.UBICACION || ''} <span class="text-gold ml-1">${percentage}%</span></p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectProject(id) {
+            APP_STATE.currentProjectId = id;
+            renderSidebar();
             
-            // Aquí continuarías con la lógica de renderizado original
-            console.log("Sistema Rehidratado para:", APP_STATE.user);
+            const p = APP_STATE.projects.find(x => x.ID_PROYECTO === id);
+            if(!p) return;
+
+            // Inyección básica de datos corporativos
+            document.getElementById('ui-proj-name').innerText = p.NOMBRE_PROYECTO;
+            document.getElementById('ui-proj-loc').innerText = p.UBICACION;
+            document.getElementById('ui-proj-id').innerText = p.ID_PROYECTO;
+            document.getElementById('ui-proj-supervisor').innerText = p.SUPERVISOR || "Asignación pendiente";
+            
+            document.getElementById('ui-kpi-progress').innerText = `${(Number(p.AVANCE_FISICO) * 100).toFixed(1)}%`;
+            document.getElementById('ui-kpi-budget').innerText = fmtCurrency(p.PPTO_APROBADO);
+            document.getElementById('ui-kpi-spent').innerText = fmtCurrency(p.PPTO_EJECUTADO);
+
+            // Renderizado Dinámico de la Línea de Tiempo Gráfica
+            renderGraphicalTimeline(p.FASE_ACTUAL);
+
+            // Sincronización de Materiales e Insumos de Obra
+            renderProjectInventory(id);
+
+            // Vinculación de Planos Técnicos y Fotografía Integrada
+            const blueprintEl = document.getElementById('ui-blueprint-container');
+            if (p.URL_PLANO && p.URL_PLANO !== "N/A" && p.URL_PLANO.trim() !== "") {
+                blueprintEl.innerHTML = `<a href="${p.URL_PLANO}" target="_blank" class="hover:underline flex items-center justify-center h-full w-full">🗺️ VER PLANO MAESTRO TÉCNICO</a>`;
+                blueprintEl.className = "h-32 w-full rounded-2xl bg-navy text-gold font-bold text-xs p-4 text-center cursor-pointer flex items-center justify-center border-2 border-gold/30 shadow-md";
+            } else {
+                blueprintEl.innerText = "PLANO: NO REGISTRADO (N/A)";
+                blueprintEl.className = "h-32 w-full rounded-2xl bg-slate-800 text-slate-400 font-bold text-xs p-4 text-center flex items-center justify-center border border-slate-700";
+            }
+
+            const photoEl = document.getElementById('ui-photo-container');
+            if (p.URL_FOTO && p.URL_FOTO !== "N/A" && p.URL_FOTO.trim() !== "") {
+                photoEl.style.backgroundImage = `url('${p.URL_FOTO}')`;
+                photoEl.innerText = "";
+            } else {
+                photoEl.style.backgroundImage = "none";
+                photoEl.innerText = "Sin registro visual disponible";
+            }
+        }
+
+        function renderGraphicalTimeline(currentPhaseName) {
+            let targetIndex = STANDARD_PHASES.findIndex(fase => fase.toLowerCase() === String(currentPhaseName).trim().toLowerCase());
+            if(targetIndex === -1) {
+                targetIndex = parseInt(currentPhaseName) || 0; // Fallback por índice numérico
+            }
+
+            // Actualizar la línea de progreso horizontal
+            const stepPercent = targetIndex * 25;
+            document.getElementById('ui-timeline-line').style.width = `${stepPercent}%`;
+
+            // Actualizar cada nodo de forma gráfica e individual
+            STANDARD_PHASES.forEach((_, idx) => {
+                const dot = document.getElementById(`step-dot-${idx}`);
+                const txt = document.getElementById(`step-txt-${idx}`);
+                
+                if (idx < targetIndex) {
+                    // Fase completada con éxito (Verde corporativo)
+                    dot.className = "w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-green text-white border-4 border-white shadow-md transition-colors";
+                    txt.className = "text-[11px] font-bold mt-2 text-green";
+                } else if (idx === targetIndex) {
+                    // Fase activa actual (Oro corporativo y texto Navy)
+                    dot.className = "w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-gold text-navy border-4 border-white shadow-lg scale-110 transition-all";
+                    txt.className = "text-[11px] font-black mt-2 text-navy";
+                } else {
+                    // Fase futura/pendiente (Gris apagado)
+                    dot.className = "w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-slate-200 text-slate-500 border-4 border-white shadow-md transition-colors";
+                    txt.className = "text-[11px] font-bold mt-2 text-slate-400";
+                }
+            });
+        }
+
+        function renderProjectInventory(projId) {
+            const items = APP_STATE.inventory.filter(i => i.ID_PROYECTO === projId);
+            const tableBody = document.getElementById('inventory-full-table');
+
+            if(items.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 italic font-medium">No se registran despachos ni materiales para este proyecto.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = items.map(m => {
+                const reqValue = Number(m.REQUERIDO) || 0;
+                const obraValue = Number(m.EN_OBRA) || 0;
+                
+                // Procesamiento reactivo de la fórmula condicional solicitada
+                const computedStatus = (obraValue < (reqValue * 0.3)) ? "PEDIDO URGENTE" : "EN STOCK";
+                const isUrgent = computedStatus === "PEDIDO URGENTE";
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="py-3.5 font-mono text-xs text-slate-500">${m.CODIGOINSUMO || 'N/A'}</td>
+                        <td class="py-3.5 font-bold text-navy">${m.INSUMO || m.NOMBRE || 'Insumo sin nombre'}</td>
+                        <td class="py-3.5 text-slate-600 text-xs">${m.UNIDAD || 'Und'}</td>
+                        <td class="py-3.5 font-semibold text-slate-700">${reqValue}</td>
+                        <td class="py-3.5 font-semibold text-slate-700">${obraValue}</td>
+                        <td class="py-3.5 text-center">
+                            <span class="inline-block px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider ${isUrgent ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
+                                ${computedStatus}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function logout() {
+            APP_STATE = { user: null, projects: [], inventory: [], currentProjectId: null };
+            document.getElementById('login-form').reset();
+            document.getElementById('login-error').classList.add('hidden');
+            switchView('view-login');
         }
     </script>
 </body>
