@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArchHub | Control de Obra Profesional</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = { theme: { extend: { colors: { navy: '#003049', green: '#006837', gold: '#FFCC00', bgslate: '#f8fafc' } } } }
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { navy: '#003049', green: '#006837', gold: '#FFCC00', bgslate: '#f8fafc' } } } }
     </script>
     <style>
+        body { background-color: #f8fafc; }
         .spinner { border: 4px solid rgba(0, 48, 73, 0.1); border-left-color: #FFCC00; border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .view-layer { transition: opacity 0.25s ease-in-out; }
@@ -16,32 +18,39 @@
         .active-layer { opacity: 1; pointer-events: auto; position: relative; height: auto; }
     </style>
 </head>
-<body class="text-navy h-screen flex flex-col font-sans antialiased bg-bgslate">
+<body class="text-navy h-screen flex flex-col font-sans antialiased">
 
     <div id="loader-overlay" class="fixed inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col justify-center items-center hidden">
         <div class="spinner mb-4"></div>
-        <p class="font-bold text-navy tracking-widest text-xs animate-pulse" id="loader-text">PROCESANDO...</p>
+        <p class="font-bold text-navy tracking-widest text-xs animate-pulse" id="loader-text">PROCESANDO DATOS...</p>
     </div>
 
     <main id="view-login" class="view-layer active-layer min-h-screen flex items-center justify-center p-4">
         <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-gold">
             <h1 class="text-4xl font-black text-navy mb-1 text-center">Arch<span class="text-gold">Hub</span></h1>
-            <form id="login-form" class="space-y-5 mt-8">
-                <input type="text" id="user" placeholder="Usuario" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-gold">
-                <input type="password" id="pass" placeholder="Contraseña" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-gold">
-                <button type="submit" class="w-full bg-navy text-white font-bold py-3 rounded-xl hover:bg-opacity-90">ENTRAR</button>
+            <p class="text-center text-gray-400 font-bold text-xs tracking-widest mb-8">INFORME DE CONTROL ESTRATÉGICO</p>
+            <form id="login-form" class="space-y-5">
+                <input type="text" id="user" placeholder="Usuario" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-gold outline-none">
+                <input type="password" id="pass" placeholder="Contraseña" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-gold outline-none">
+                <button type="submit" class="w-full bg-navy text-white font-bold py-3 rounded-xl hover:bg-opacity-95 transition-all">AUTENTICAR PORTAL</button>
             </form>
             <div id="login-error" class="text-red-600 text-xs font-bold mt-4 text-center hidden"></div>
         </div>
     </main>
 
     <main id="view-dashboard" class="view-layer hidden-layer h-screen flex flex-col md:flex-row">
-        <aside class="w-full md:w-80 bg-navy text-white flex flex-col p-6">
-            <h2 class="text-2xl font-black mb-6">Arch<span class="text-gold">Hub</span></h2>
-            <div id="project-list" class="flex-1 overflow-y-auto space-y-2"></div>
-            <button onclick="logout()" class="text-slate-400 text-sm mt-4 underline">Cerrar Sesión</button>
+        <aside class="w-full md:w-80 bg-navy text-white flex flex-col shadow-2xl z-20 shrink-0">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h2 class="text-2xl font-black">Arch<span class="text-gold">Hub</span></h2>
+                <button onclick="logout()" class="text-[10px] text-slate-400 hover:text-white underline">Cerrar Sesión</button>
+            </div>
+            <div class="p-4 flex-1 flex flex-col overflow-hidden">
+                <h3 class="text-[11px] text-slate-400 font-bold mb-3 uppercase px-2">Proyectos</h3>
+                <div id="project-list" class="space-y-1 overflow-y-auto"></div>
+            </div>
         </aside>
-        <section class="flex-1 p-8 overflow-y-auto" id="dashboard-content">
+        <section class="flex-1 bg-bgslate overflow-y-auto p-8" id="dashboard-content">
+            <h1 class="text-3xl font-black mb-6" id="ui-proj-name">Seleccione una obra</h1>
             </section>
     </main>
 
@@ -49,23 +58,31 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbzzy40HRNJCWkPGSRGqdZN6FXxd4MKInklZZvit0ZR94WZKBpryh-Ca_NDUE-e6nyBlzw/exec";
         let APP_STATE = { user: null, projects: [], inventory: [], currentProjectId: null };
 
-        // --- REHIDRATACIÓN DE SESIÓN ---
+        // 1. REHIDRATACIÓN AL CARGAR
         document.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('auth_session');
-            if (savedUser) {
-                APP_STATE.user = JSON.parse(savedUser);
+            const savedSession = localStorage.getItem('archhub_session');
+            if (savedSession) {
+                APP_STATE.user = JSON.parse(savedSession);
                 loadDashboardEngine();
             }
         });
+
+        function showLoader(text = "PROCESANDO...") {
+            document.getElementById('loader-text').innerText = text;
+            document.getElementById('loader-overlay').classList.remove('hidden');
+        }
+
+        function hideLoader() { document.getElementById('loader-overlay').classList.add('hidden'); }
 
         async function apiRequest(action, params = {}) {
             showLoader();
             const url = new URL(API_URL);
             url.searchParams.append('action', action);
             Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-            const res = await fetch(url).then(r => r.json());
+            const response = await fetch(url).then(r => r.json());
             hideLoader();
-            return res;
+            if (response.error) throw new Error(response.error);
+            return response;
         }
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -73,32 +90,28 @@
             try {
                 const res = await apiRequest('login', { user: document.getElementById('user').value, pass: document.getElementById('pass').value });
                 APP_STATE.user = res.user;
-                localStorage.setItem('auth_session', JSON.stringify(res.user)); // Guardado persistente
+                localStorage.setItem('archhub_session', JSON.stringify(res.user)); // Guardado persistente
                 loadDashboardEngine();
-            } catch (e) {
-                document.getElementById('login-error').innerText = "Credenciales incorrectas";
-                document.getElementById('login-error').classList.remove('hidden');
+            } catch (err) {
+                const el = document.getElementById('login-error');
+                el.innerText = err.message;
+                el.classList.remove('hidden');
             }
         });
 
         function logout() {
-            localStorage.removeItem('auth_session');
+            localStorage.removeItem('archhub_session');
             window.location.reload();
         }
 
-        // ... (Mantén aquí tus funciones de renderizado, selectProject y otras lógicas) ...
-        
-        function showLoader(text) { document.getElementById('loader-text').innerText = text || "CARGANDO..."; document.getElementById('loader-overlay').classList.remove('hidden'); }
-        function hideLoader() { document.getElementById('loader-overlay').classList.add('hidden'); }
-        function switchView(viewId) {
-            document.querySelectorAll('.view-layer').forEach(el => { el.classList.remove('active-layer'); el.classList.add('hidden-layer'); });
-            document.getElementById(viewId).classList.remove('hidden-layer');
-            document.getElementById(viewId).classList.add('active-layer');
-        }
-
         async function loadDashboardEngine() {
-            // Re-usa la lógica que ya tenías aquí, asegurándote de llamar switchView('view-dashboard')
-            // ...
+            document.getElementById('view-login').classList.remove('active-layer');
+            document.getElementById('view-login').classList.add('hidden-layer');
+            document.getElementById('view-dashboard').classList.remove('hidden-layer');
+            document.getElementById('view-dashboard').classList.add('active-layer');
+            
+            // Aquí continuarías con la lógica de renderizado original
+            console.log("Sistema Rehidratado para:", APP_STATE.user);
         }
     </script>
 </body>
