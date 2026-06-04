@@ -2,61 +2,56 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>ArchHub | Login</title>
+    <title>ArchHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-950 text-white min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-900 text-white">
 
-    <div id="login-container" class="w-full max-w-sm bg-gray-900 p-8 rounded-xl shadow-xl border border-gray-800">
-        <h1 class="text-2xl font-bold mb-6 text-center">ArchHub</h1>
-        <div class="space-y-4">
-            <input type="text" id="username" placeholder="Usuario" class="w-full bg-gray-800 p-3 rounded border border-gray-700">
-            <input type="password" id="password" placeholder="Contraseña" class="w-full bg-gray-800 p-3 rounded border border-gray-700">
-            <button onclick="iniciarSesion()" id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold transition">Ingresar</button>
+    <div id="login-screen" class="flex items-center justify-center min-h-screen">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-96">
+            <h2 class="text-2xl font-bold mb-6 text-center">Login ArchHub</h2>
+            <input type="text" id="user" placeholder="Usuario" class="w-full p-2 mb-4 bg-gray-700 rounded border border-gray-600">
+            <input type="password" id="pass" placeholder="Contraseña" class="w-full p-2 mb-4 bg-gray-700 rounded border border-gray-600">
+            <button onclick="login()" class="w-full bg-blue-600 py-2 rounded font-bold hover:bg-blue-500">Ingresar</button>
+            <p id="msg" class="text-red-400 mt-4 text-sm text-center"></p>
         </div>
-        <p id="status" class="mt-4 text-center text-sm text-gray-400"></p>
     </div>
 
-    <div id="dashboard-container" class="hidden w-full max-w-6xl p-4">
-        <div id="content"></div>
+    <div id="dashboard" class="hidden p-8">
+        <h1 class="text-3xl font-bold mb-4">Bienvenido al sistema</h1>
+        <div id="data-view" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
 
     <script>
-        // REEMPLAZA ESTA URL CON LA TUYA
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzzy40HRNJCWkPGSRGqdZN6FXxd4MKInklZZvit0ZR94WZKBpryh-Ca_NDUE-e6nyBlzw/exec";
+        const GAS_URL = "AQUI_TU_NUEVA_URL_DE_APPS_SCRIPT";
 
-        async function iniciarSesion() {
-            const btn = document.getElementById('login-btn');
-            const status = document.getElementById('status');
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-
-            btn.disabled = true;
-            status.innerText = "Conectando...";
-
+        async function login() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            const msg = document.getElementById('msg');
+            
+            msg.innerText = "Cargando...";
+            
             try {
-                // Petición única de alta velocidad
-                const response = await fetch(`${GAS_URL}?action=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`);
-                const data = await response.json();
-
+                const res = await fetch(`${GAS_URL}?action=login&user=${u}&pass=${p}`);
+                const data = await res.json();
+                
                 if (data.success) {
-                    document.getElementById('login-container').classList.add('hidden');
-                    document.getElementById('dashboard-container').classList.remove('hidden');
-                    renderizarDashboard(data);
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('dashboard').classList.remove('hidden');
+                    renderDashboard(data);
                 } else {
-                    throw new Error("Usuario o contraseña incorrectos");
+                    msg.innerText = "Credenciales incorrectas o usuario inactivo.";
                 }
-            } catch (err) {
-                status.innerText = err.message;
-                btn.disabled = false;
+            } catch (e) {
+                msg.innerText = "Error de conexión: " + e.message;
             }
         }
 
-        function renderizarDashboard(data) {
-            // Aquí va tu lógica original de renderizado que tenías en tu index.html
-            const container = document.getElementById('content');
-            container.innerHTML = `<h2 class="text-xl mb-4">Bienvenido, ${data.name || 'Usuario'}</h2>`;
-            // ... resto de tu código de renderizado de tablas y proyectos ...
+        function renderDashboard(data) {
+            const view = document.getElementById('data-view');
+            view.innerHTML = `<p class="col-span-2">Hola ${data.name}, tienes ${data.projects.length} proyectos asignados.</p>`;
+            // Aquí puedes añadir tu lógica de renderizado original
         }
     </script>
 </body>
